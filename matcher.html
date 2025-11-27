@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List Compare – Matching / Unmatching values</title>
+    <style>
+        body {font-family: Arial, Helvetica, sans-serif; line-height: 1.5; margin: 2rem;}
+        textarea {width: 100%; height: 150px; font-family: monospace; margin-bottom: 10px;}
+        button {padding: 8px 16px; font-size: 1rem;}
+        .section {margin-top: 2rem;}
+        .result {background:#f8f8f8; padding:10px; white-space: pre-wrap; border:1px solid #ddd;}
+        .label {font-weight: bold; margin-top: .5rem;}
+    </style>
+</head>
+<body>
+
+<h1>🔎 List Compare – Find Matches & Mismatches</h1>
+
+<p>Paste your two lists below.  Each list can be written as:</p>
+<ul>
+    <li>one value per line,</li>
+    <li>comma‑separated values, or</li>
+    <li>a mixture of the two (commas, spaces, new‑lines are all ignored).</li>
+</ul>
+
+<div class="section">
+    <label class="label" for="list1">List 1</label>
+    <textarea id="list1" placeholder="e.g. 29531&#10;29522&#10;29512"></textarea>
+</div>
+
+<div class="section">
+    <label class="label" for="list2">List 2</label>
+    <textarea id="list2" placeholder="e.g. 29531,29522,29512"></textarea>
+</div>
+
+<button id="compareBtn">🚦 Compare Lists</button>
+
+<div class="section" id="output" style="display:none;">
+    <h2>⚖️ Results</h2>
+
+    <div class="subsection">
+        <h3>✅ Matched values (present in both lists)</h3>
+        <div id="matched" class="result"></div>
+    </div>
+
+    <div class="subsection">
+        <h3>❌ Only in List 1</h3>
+        <div id="only1" class="result"></div>
+    </div>
+
+    <div class="subsection">
+        <h3>❌ Only in List 2</h3>
+        <div id="only2" class="result"></div>
+    </div>
+</div>
+
+<script>
+// ------------------------------------------------------------
+// Utility: turn a raw string (any mix of commas, spaces, newlines)
+// into a **sorted array of unique trimmed values**.
+// ------------------------------------------------------------
+function parseList(raw) {
+    // Split on commas, newlines, or any whitespace
+    // filter out empty strings, trim each entry
+    // Convert numeric strings to numbers (optional, keep as string for generic data)
+    const items = raw
+        .split(/[\s,]+/)          // split on any whitespace or commas
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+    // Remove duplicates while preserving order (later we will sort)
+    const uniq = [...new Set(items)];
+    // Sort numerically if they look like numbers, otherwise alphabetically
+    if (uniq.every(v => !isNaN(v))) {
+        uniq.sort((a, b) => Number(a) - Number(b));
+    } else {
+        uniq.sort();   // lexical
+    }
+    return uniq;
+}
+
+// ------------------------------------------------------------
+// Main comparison logic
+// ------------------------------------------------------------
+function compareLists() {
+    const raw1 = document.getElementById('list1').value;
+    const raw2 = document.getElementById('list2').value;
+
+    const list1 = parseList(raw1);
+    const list2 = parseList(raw2);
+
+    const set1 = new Set(list1);
+    const set2 = new Set(list2);
+
+    const matched = [];
+    const only1   = [];
+    const only2   = [];
+
+    // elements present in both
+    list1.forEach(v => { if (set2.has(v)) matched.push(v); else only1.push(v); });
+    // elements only in list2 (not already in matched)
+    list2.forEach(v => { if (!set1.has(v)) only2.push(v); });
+
+    // Show the results
+    document.getElementById('matched').textContent = matched.join(', ') || '(none)';
+    document.getElementById('only1').textContent   = only1.join(', ')   || '(none)';
+    document.getElementById('only2').textContent   = only2.join(', ')   || '(none)';
+
+    document.getElementById('output').style.display = 'block';
+}
+
+// ------------------------------------------------------------
+// Button handler
+// ------------------------------------------------------------
+document.getElementById('compareBtn').addEventListener('click', compareLists);
+</script>
+
+</body>
+</html>
